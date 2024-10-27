@@ -345,6 +345,7 @@ void LivoxLidarCallback::SetEnableFovCallback(livox_status status, uint32_t hand
               << handle << std::endl;
     return;
   }
+  LdsLidar* lds_lidar = static_cast<LdsLidar*>(client_data);
   
   if (status == kLivoxLidarStatusSuccess) {
     std::cout << "successfully set enable fov 0, handle: " << handle << std::endl;
@@ -368,6 +369,7 @@ void LivoxLidarCallback::SetConfigureFov0Callback(livox_status status, uint32_t 
               << handle << std::endl;
     return;
   }
+  LdsLidar* lds_lidar = static_cast<LdsLidar*>(client_data);
   
   if (status == kLivoxLidarStatusSuccess) {
     std::cout << "successfully set fov limit 0, handle: " << handle << std::endl;
