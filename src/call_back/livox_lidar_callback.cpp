@@ -87,6 +87,27 @@ void LivoxLidarCallback::LidarInfoChangeCallback(const uint32_t handle,
         std::cout << "set dual emit mode, handle: " << handle << ", enable dual emit: "
                   << static_cast<int32_t>(config.dual_emit_en) << std::endl;
       }
+
+      // Set (static) fov for the lidar horizontally slice off the back
+      {
+        EnableLivoxLidarFov(handle, static_cast<uint8_t>(1),
+                            LivoxLidarCallback::SetEnableFovCallback, lds_lidar);
+        std::cout << "set enable fov limit 0, handle: " << handle << std::endl;
+      }
+
+      {
+        FovCfg config {
+          90,
+          360 - 90,
+          -10,
+          60,
+          0
+        };
+
+        SetLivoxLidarFovCfg0(handle, &config,
+                             LivoxLidarCallback::SetConfigureFov0Callback, lds_lidar);
+        std::cout << "set fov limit 0, handle: " << handle << std::endl;
+      }
     } // free lock for set_bits
 
     // set extrinsic params into lidar
@@ -313,6 +334,61 @@ void LivoxLidarCallback::EnableLivoxLidarImuDataCallback(livox_status status, ui
     std::cout << "failed to enable Livox Lidar imu, ip: " << IpNumToString(handle) << std::endl;
   }
 }
+
+void LivoxLidarCallback::SetEnableFovCallback(livox_status status, uint32_t handle,
+                                  LivoxLidarAsyncControlResponse *response,
+                                  void *client_data)
+{
+  LidarDevice* lidar_device =  GetLidarDevice(handle, client_data);
+  if (lidar_device == nullptr) {
+    std::cout << "failed to set enable fov 0 since no lidar device found, handle: "
+              << handle << std::endl;
+    return;
+  }
+  
+  if (status == kLivoxLidarStatusSuccess) {
+    std::cout << "successfully set enable fov 0, handle: " << handle << std::endl;
+  } else if (status == kLivoxLidarStatusTimeout) {
+    EnableLivoxLidarFov(handle, static_cast<uint8_t>(1),
+                        LivoxLidarCallback::SetEnableFovCallback, lds_lidar);
+    std::cout << "set enable fov limit 0, handle: " << handle << std::endl;
+  } else {
+    std::cout << "failed to enable fov 0, handle: " << handle << std::endl;
+  }
+  return;
+}
+
+void LivoxLidarCallback::SetConfigureFov0Callback(livox_status status, uint32_t handle,
+                                  LivoxLidarAsyncControlResponse *response,
+                                  void *client_data)
+{
+  LidarDevice* lidar_device =  GetLidarDevice(handle, client_data);
+  if (lidar_device == nullptr) {
+    std::cout << "failed to set fov 0 params since no lidar device found, handle: "
+              << handle << std::endl;
+    return;
+  }
+  
+  if (status == kLivoxLidarStatusSuccess) {
+    std::cout << "successfully set fov limit 0, handle: " << handle << std::endl;
+  } else if (status == kLivoxLidarStatusTimeout) {
+    FovCfg config {
+      90,
+      360 - 90,
+      -10,
+      60,
+      0
+    };
+    
+    SetLivoxLidarFovCfg0(handle, &config,
+                         LivoxLidarCallback::SetConfigureFov0Callback, lds_lidar);
+    std::cout << "set fov limit 0, handle: " << handle << std::endl;
+  } else {
+    std::cout << "failed set fov limit 0, handle: " << handle << std::endl;
+  }
+  return;
+}
+
 
 LidarDevice* LivoxLidarCallback::GetLidarDevice(const uint32_t handle, void* client_data) {
   if (client_data == nullptr) {
